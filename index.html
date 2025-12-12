@@ -41,30 +41,44 @@
         </div>
 
         <div class="main-view" id="mainView">
-            <div class="stats-toggle" id="statsToggle">
-                <span class="toggle-icon">+</span>
-            </div>
+            <div class="streaks-container" id="streaksContainer"></div>
             
-            <div class="stats" id="statsPanel">
-                <h1>your life in seasons</h1>
-                
-                <div class="stat-item">
-                    <div class="stat-label">current age</div>
-                    <div class="stat-value" id="currentAge">-</div>
-                </div>
+            <div class="stats-wrapper">
+                <div class="stats" id="statsPanel">
+                    <h1>your life in seasons</h1>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">current age</div>
+                        <div class="stat-value" id="currentAge">-</div>
+                    </div>
 
-                <div class="stat-item">
-                    <div class="stat-label">weeks lived</div>
-                    <div class="stat-value" id="weeksLived">-</div>
-                </div>
+                    <div class="stat-item">
+                        <div class="stat-label">days lived</div>
+                        <div class="stat-value" id="daysLived">-</div>
+                    </div>
 
-                <div class="stat-item">
-                    <div class="stat-label">weeks remaining</div>
-                    <div class="stat-value" id="weeksRemaining">-</div>
+                    <div class="stat-item">
+                        <div class="stat-label">weeks lived</div>
+                        <div class="stat-value" id="weeksLived">-</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">weeks remaining</div>
+                        <div class="stat-value" id="weeksRemaining">-</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">days remaining</div>
+                        <div class="stat-value" id="daysRemaining">-</div>
+                    </div>
+                    
+                    <div class="reset-link">
+                        <a id="resetLink">reset</a>
+                    </div>
                 </div>
                 
-                <div class="reset-link">
-                    <a id="resetLink">reset</a>
+                <div class="stats-toggle" id="statsToggle">
+                    <span class="toggle-icon">+</span>
                 </div>
             </div>
         </div>
