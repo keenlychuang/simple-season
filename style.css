@@ -4,23 +4,52 @@
     box-sizing: border-box;
 }
 
+:root {
+    --saturation: 100%;
+    --flood-progress: 0%;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 25%, #c44569 50%, #786fa6 75%, #4a69bd 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    position: relative;
+    background: linear-gradient(
+        135deg, 
+        hsl(0, 100%, 72%) 0%, 
+        hsl(350, 100%, 63%) 25%, 
+        hsl(340, 100%, 52%) 50%, 
+        hsl(260, 100%, 55%) 75%, 
+        hsl(220, 100%, 58%) 100%
+    );
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg, 
+        hsl(0, var(--saturation), 72%) 0%, 
+        hsl(350, var(--saturation), 63%) 25%, 
+        hsl(340, var(--saturation), 52%) 50%, 
+        hsl(260, var(--saturation), 55%) 75%, 
+        hsl(220, var(--saturation), 58%) 100%
+    );
+    clip-path: inset(0 calc(100% - var(--flood-progress)) 0 0);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .container {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
     max-width: 500px;
     width: 100%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .prompt-view, .main-view {
@@ -31,16 +60,32 @@ body {
     display: block;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 2em;
+.prompt-view.active {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.subtitle {
-    color: #666;
-    margin-bottom: 30px;
-    font-size: 1.1em;
+.main-view.active {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 40px;
+    max-width: none;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2em;
+    text-transform: lowercase;
 }
 
 .form-group {
@@ -52,6 +97,7 @@ label {
     margin-bottom: 8px;
     color: #555;
     font-weight: 500;
+    text-transform: lowercase;
 }
 
 select, input {
@@ -61,11 +107,16 @@ select, input {
     border-radius: 8px;
     font-size: 16px;
     transition: border-color 0.3s;
+    text-transform: lowercase;
 }
 
 select:focus, input:focus {
     outline: none;
     border-color: #ff6b6b;
+}
+
+input::placeholder {
+    text-transform: lowercase;
 }
 
 button {
@@ -79,6 +130,7 @@ button {
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: lowercase;
 }
 
 button:hover {
@@ -90,8 +142,55 @@ button:active {
     transform: translateY(0);
 }
 
+.stats-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.stats-toggle:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.toggle-icon {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.6em;
+    font-weight: 300;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+.stats-toggle.open .toggle-icon {
+    transform: rotate(45deg);
+}
+
 .stats {
-    margin-top: 30px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out, opacity 0.4s ease-out;
+    margin-bottom: 0;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 0 40px;
+    width: 100%;
+    max-width: 500px;
+    opacity: 0;
+}
+
+.stats.open {
+    max-height: 500px;
+    margin-bottom: 20px;
+    padding: 40px;
+    opacity: 1;
 }
 
 .stat-item {
@@ -101,16 +200,22 @@ button:active {
     margin-bottom: 15px;
 }
 
+.stat-item:last-child {
+    margin-bottom: 0;
+}
+
 .stat-label {
     color: #666;
     font-size: 0.9em;
     margin-bottom: 5px;
+    text-transform: lowercase;
 }
 
 .stat-value {
     color: #333;
     font-size: 1.8em;
     font-weight: 600;
+    text-transform: lowercase;
 }
 
 .reset-link {
@@ -123,6 +228,7 @@ button:active {
     text-decoration: none;
     font-size: 0.9em;
     cursor: pointer;
+    text-transform: lowercase;
 }
 
 .reset-link a:hover {

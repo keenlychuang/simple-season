@@ -1,2 +1,2 @@
-# simple-season
-A helpful memento mori 
+# simple season
+a memento mori 
