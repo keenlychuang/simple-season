@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Season</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Prompt View -->
+        <div class="prompt-view" id="promptView">
+            <h1>Simple Season</h1>
+            <p class="subtitle">A helpful memento mori</p>
+            
+            <form id="birthForm">
+                <div class="form-group">
+                    <label for="birthMonth">Birth Month</label>
+                    <select id="birthMonth" required>
+                        <option value="">Select month...</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthYear">Birth Year</label>
+                    <input type="number" id="birthYear" min="1900" max="2025" placeholder="e.g., 1990" required>
+                </div>
+
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+
+        <!-- Main View -->
+        <div class="main-view" id="mainView">
+            <h1>Your Life in Seasons</h1>
+            <p class="subtitle">Time is precious</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Your current age</div>
+                    <div class="stat-value" id="currentAge">-</div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-label">Weeks lived (approx.)</div>
+                    <div class="stat-value" id="weeksLived">-</div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-label">Weeks remaining (life expectancy: 80)</div>
+                    <div class="stat-value" id="weeksRemaining">-</div>
+                </div>
+            </div>
+
+            <div class="reset-link">
+                <a id="resetLink">Reset birth date</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
