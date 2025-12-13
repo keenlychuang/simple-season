@@ -1,24 +1,25 @@
-const promptView = document.getElementById('promptView');
-const mainView = document.getElementById('mainView');
-const birthForm = document.getElementById('birthForm');
-const resetLink = document.getElementById('resetLink');
-const statsToggle = document.getElementById('statsToggle');
-const statsPanel = document.getElementById('statsPanel');
-const streaksContainer = document.getElementById('streaksContainer');
-const birthYearInput = document.getElementById('birthYear');
-const birthMonthInput = document.getElementById('birthMonth');
-const monthField = document.getElementById('monthField');
-const yearField = document.getElementById('yearField');
-const scrollPickerOverlay = document.getElementById('scrollPickerOverlay');
-const scrollPickerList = document.getElementById('scrollPickerList');
-const scrollPickerContainer = document.getElementById('scrollPickerContainer');
-const scrollPickerTitle = document.getElementById('scrollPickerTitle');
-const scrollPickerClose = document.getElementById('scrollPickerClose');
+// DOM Elements
+const elements = {
+    promptView: document.getElementById('promptView'),
+    mainView: document.getElementById('mainView'),
+    birthForm: document.getElementById('birthForm'),
+    resetLink: document.getElementById('resetLink'),
+    statsToggle: document.getElementById('statsToggle'),
+    statsPanel: document.getElementById('statsPanel'),
+    streaksContainer: document.getElementById('streaksContainer'),
+    birthYearInput: document.getElementById('birthYear'),
+    birthMonthInput: document.getElementById('birthMonth'),
+    monthField: document.getElementById('monthField'),
+    yearField: document.getElementById('yearField'),
+    scrollPickerOverlay: document.getElementById('scrollPickerOverlay'),
+    scrollPickerList: document.getElementById('scrollPickerList'),
+    scrollPickerTitle: document.getElementById('scrollPickerTitle'),
+    scrollPickerClose: document.getElementById('scrollPickerClose'),
+    transitionGlow: document.getElementById('transitionGlow')
+};
 
-let streakInterval = null;
-let currentPickerType = null;
-
-const months = [
+// Constants
+const MONTHS = [
     { value: 1, label: 'january' },
     { value: 2, label: 'february' },
     { value: 3, label: 'march' },
@@ -33,431 +34,349 @@ const months = [
     { value: 12, label: 'december' }
 ];
 
-function init() {
-    const storedData = localStorage.getItem('birthDate');
-    
-    if (storedData) {
-        const birthDate = JSON.parse(storedData);
-        showMainView(birthDate, true);
-    } else {
-        showPromptView();
-    }
-    
-    setupPickers();
-}
+const CONFIG = {
+    maxAge: 75,
+    minSaturation: 33,
+    animationDuration: 2000
+};
 
-function setupPickers() {
-    monthField.addEventListener('click', () => openPicker('month'));
-    yearField.addEventListener('click', () => openPicker('year'));
-    
-    scrollPickerClose.addEventListener('click', closePicker);
-    scrollPickerOverlay.addEventListener('click', (e) => {
-        if (e.target === scrollPickerOverlay) {
-            closePicker();
-        }
-    });
-}
+// State
+let streakInterval = null;
+let currentPickerType = null;
 
-function openPicker(type) {
-    currentPickerType = type;
-    scrollPickerList.innerHTML = '';
-    
-    if (type === 'month') {
-        scrollPickerTitle.textContent = 'select month';
-        
-        months.forEach(month => {
-            const option = document.createElement('div');
-            option.className = 'scroll-picker-option';
-            option.textContent = month.label;
-            option.dataset.value = month.value;
-            
-            if (birthMonthInput.value === String(month.value)) {
-                option.classList.add('selected');
-            }
-            
-            option.addEventListener('click', () => selectOption(option, month.value, month.label));
-            scrollPickerList.appendChild(option);
-        });
-    } else {
-        scrollPickerTitle.textContent = 'select year';
-        
-        const currentYear = new Date().getFullYear();
-        const startYear = currentYear - 100;
-        
-        for (let year = currentYear; year >= startYear; year--) {
-            const option = document.createElement('div');
-            option.className = 'scroll-picker-option';
-            option.textContent = year;
-            option.dataset.value = year;
-            
-            if (birthYearInput.value === String(year)) {
-                option.classList.add('selected');
-            }
-            
-            option.addEventListener('click', () => selectOption(option, year, year));
-            scrollPickerList.appendChild(option);
-        }
-    }
-    
-    scrollPickerOverlay.classList.add('active');
-    
-    // Scroll to selected item if exists
-    setTimeout(() => {
-        const selected = scrollPickerList.querySelector('.selected');
-        if (selected) {
-            selected.scrollIntoView({ block: 'center', behavior: 'auto' });
-        }
-    }, 50);
-}
+// Utility functions
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
-function selectOption(element, value, label) {
-    // Remove selected from all options
-    scrollPickerList.querySelectorAll('.scroll-picker-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    
-    // Add selected to clicked option
-    element.classList.add('selected');
-    
-    // Update the appropriate field
-    if (currentPickerType === 'month') {
-        birthMonthInput.value = value;
-        const fieldText = monthField.querySelector('.scroll-field-text');
-        fieldText.textContent = label;
-        fieldText.classList.remove('placeholder');
-    } else {
-        birthYearInput.value = value;
-        const fieldText = yearField.querySelector('.scroll-field-text');
-        fieldText.textContent = label;
-        fieldText.classList.remove('placeholder');
-    }
-}
+const setCSSVar = (name, value) => {
+    document.documentElement.style.setProperty(name, value);
+};
 
-function closePicker() {
-    scrollPickerOverlay.classList.remove('active');
-    currentPickerType = null;
-}
-
-function resetSelectors() {
-    birthMonthInput.value = '';
-    birthYearInput.value = '';
-    
-    const monthText = monthField.querySelector('.scroll-field-text');
-    monthText.textContent = 'select month...';
-    monthText.classList.add('placeholder');
-    
-    const yearText = yearField.querySelector('.scroll-field-text');
-    yearText.textContent = 'select year...';
-    yearText.classList.add('placeholder');
-}
-
-function showPromptView(animate = false) {
-    stopStreaks();
-    
-    if (animate) {
-        // Reverse animation
-        animateBackgroundReverse(() => {
-            promptView.classList.add('active');
-            promptView.classList.add('fade-in');
-            mainView.classList.remove('active');
-            
-            // Remove fade-in class after animation completes
-            setTimeout(() => {
-                promptView.classList.remove('fade-in');
-            }, 500);
-        });
-    } else {
-        promptView.classList.add('active');
-        mainView.classList.remove('active');
-        document.documentElement.style.setProperty('--saturation', '100%');
-        document.documentElement.style.setProperty('--flood-progress', '0%');
-        document.documentElement.style.setProperty('--reverse-flood-progress', '0%');
-    }
-}
-
-function animateBackgroundReverse(callback) {
-    const duration = 2000;
-    const startTime = performance.now();
-    
-    const transitionGlow = document.getElementById('transitionGlow');
-    
-    // Reset reverse flood progress
-    document.documentElement.style.setProperty('--reverse-flood-progress', '0%');
-    
-    function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    }
-    
-    function animate(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeOutCubic(progress);
-        
-        // Sweep the saturated color from right to left
-        document.documentElement.style.setProperty('--reverse-flood-progress', (easedProgress * 100) + '%');
-        
-        // Update glow position (moving right to left)
-        if (transitionGlow) {
-            const glowPosition = 100 - (easedProgress * 100);
-            transitionGlow.style.left = `calc(${glowPosition}% - 15px)`;
-            
-            // Fade in at start, fade out at end
-            let glowOpacity = 1;
-            if (progress < 0.1) {
-                glowOpacity = progress / 0.1;
-            } else if (progress > 0.9) {
-                glowOpacity = (1 - progress) / 0.1;
-            }
-            transitionGlow.style.opacity = glowOpacity;
-        }
-        
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            // Reset everything for next use
-            document.documentElement.style.setProperty('--saturation', '100%');
-            document.documentElement.style.setProperty('--flood-progress', '0%');
-            document.documentElement.style.setProperty('--reverse-flood-progress', '0%');
-            if (transitionGlow) {
-                transitionGlow.style.opacity = 0;
-            }
-            if (callback) callback();
-        }
-    }
-    
-    requestAnimationFrame(animate);
-}
-
-function showMainView(birthDate, instant = false) {
-    promptView.classList.remove('active');
-    mainView.classList.add('active');
-    updateStats(birthDate);
-    
-    if (instant) {
-        setBackgroundInstant(birthDate);
-        startStreaks(birthDate);
-    } else {
-        animateBackground(birthDate);
-        // Start streaks after the background animation completes
-        setTimeout(() => startStreaks(birthDate), 2000);
-    }
-}
-
-function setBackgroundInstant(birthDate) {
-    const saturation = calculateSaturation(birthDate);
-    document.documentElement.style.setProperty('--saturation', saturation + '%');
-    document.documentElement.style.setProperty('--flood-progress', '100%');
-}
-
-function calculateAge(birthDate) {
+const calculateAge = (birthDate) => {
     const birth = new Date(birthDate.year, birthDate.month - 1, 1);
     const today = new Date();
-    
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
         age--;
     }
     return age;
-}
+};
 
-function calculateSaturation(birthDate) {
+const calculateSaturation = (birthDate) => {
     const age = calculateAge(birthDate);
-    const maxAge = 75;
-    const ageRatio = Math.min(age / maxAge, 1);
-    const minSaturation = 33;
-    return Math.max(minSaturation, 100 - (ageRatio * (100 - minSaturation)));
-}
+    const ageRatio = Math.min(age / CONFIG.maxAge, 1);
+    return Math.max(CONFIG.minSaturation, 100 - (ageRatio * (100 - CONFIG.minSaturation)));
+};
 
-function animateBackground(birthDate) {
-    const saturation = calculateSaturation(birthDate);
-    document.documentElement.style.setProperty('--saturation', saturation + '%');
-    
-    const transitionGlow = document.getElementById('transitionGlow');
-    
-    const duration = 2000;
+const getAgeRatio = (birthDate) => Math.min(calculateAge(birthDate) / CONFIG.maxAge, 1);
+
+// Animation helper
+const animate = (duration, onFrame, onComplete) => {
     const startTime = performance.now();
     
-    function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    }
-    
-    function animate(currentTime) {
+    const tick = (currentTime) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const easedProgress = easeOutCubic(progress);
         
-        document.documentElement.style.setProperty('--flood-progress', (easedProgress * 100) + '%');
-        
-        // Update glow position and opacity
-        if (transitionGlow) {
-            const glowPosition = easedProgress * 100;
-            transitionGlow.style.left = `calc(${glowPosition}% - 15px)`;
-            
-            // Fade in at start, fade out at end
-            let glowOpacity = 1;
-            if (progress < 0.1) {
-                glowOpacity = progress / 0.1;
-            } else if (progress > 0.9) {
-                glowOpacity = (1 - progress) / 0.1;
-            }
-            transitionGlow.style.opacity = glowOpacity;
-        }
+        onFrame(progress, easedProgress);
         
         if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            if (transitionGlow) {
-                transitionGlow.style.opacity = 0;
-            }
+            requestAnimationFrame(tick);
+        } else if (onComplete) {
+            onComplete();
         }
+    };
+    
+    requestAnimationFrame(tick);
+};
+
+// Glow animation helper
+const animateGlow = (progress, getPosition) => {
+    const glow = elements.transitionGlow;
+    if (!glow) return;
+    
+    glow.style.left = `calc(${getPosition(progress)}% - 15px)`;
+    
+    let opacity = 1;
+    if (progress < 0.1) opacity = progress / 0.1;
+    else if (progress > 0.9) opacity = (1 - progress) / 0.1;
+    glow.style.opacity = opacity;
+};
+
+// Picker functions
+const openPicker = (type) => {
+    currentPickerType = type;
+    elements.scrollPickerList.innerHTML = '';
+    
+    const items = type === 'month' 
+        ? MONTHS.map(m => ({ value: m.value, label: m.label }))
+        : Array.from({ length: 101 }, (_, i) => {
+            const year = new Date().getFullYear() - i;
+            return { value: year, label: year };
+        });
+    
+    elements.scrollPickerTitle.textContent = `select ${type}`;
+    const currentValue = type === 'month' 
+        ? elements.birthMonthInput.value 
+        : elements.birthYearInput.value;
+    
+    items.forEach(item => {
+        const option = document.createElement('div');
+        option.className = 'scroll-picker-option';
+        option.textContent = item.label;
+        option.dataset.value = item.value;
+        
+        if (currentValue === String(item.value)) {
+            option.classList.add('selected');
+        }
+        
+        option.addEventListener('click', () => selectOption(option, item.value, item.label));
+        elements.scrollPickerList.appendChild(option);
+    });
+    
+    elements.scrollPickerOverlay.classList.add('active');
+    
+    setTimeout(() => {
+        const selected = elements.scrollPickerList.querySelector('.selected');
+        if (selected) selected.scrollIntoView({ block: 'center', behavior: 'auto' });
+    }, 50);
+};
+
+const selectOption = (element, value, label) => {
+    elements.scrollPickerList.querySelectorAll('.scroll-picker-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    element.classList.add('selected');
+    
+    const isMonth = currentPickerType === 'month';
+    const input = isMonth ? elements.birthMonthInput : elements.birthYearInput;
+    const field = isMonth ? elements.monthField : elements.yearField;
+    
+    input.value = value;
+    const fieldText = field.querySelector('.scroll-field-text');
+    fieldText.textContent = label;
+    fieldText.classList.remove('placeholder');
+};
+
+const closePicker = () => {
+    elements.scrollPickerOverlay.classList.remove('active');
+    currentPickerType = null;
+};
+
+const resetSelectors = () => {
+    elements.birthMonthInput.value = '';
+    elements.birthYearInput.value = '';
+    
+    [elements.monthField, elements.yearField].forEach((field, i) => {
+        const text = field.querySelector('.scroll-field-text');
+        text.textContent = i === 0 ? 'select month...' : 'select year...';
+        text.classList.add('placeholder');
+    });
+};
+
+// Background animation
+const animateBackground = (birthDate, reverse = false) => {
+    const saturation = calculateSaturation(birthDate);
+    
+    if (!reverse) {
+        setCSSVar('--saturation', saturation + '%');
     }
     
-    requestAnimationFrame(animate);
-}
+    const progressVar = reverse ? '--reverse-flood-progress' : '--flood-progress';
+    if (reverse) setCSSVar('--reverse-flood-progress', '0%');
+    
+    return new Promise(resolve => {
+        animate(
+            CONFIG.animationDuration,
+            (progress, easedProgress) => {
+                setCSSVar(progressVar, (easedProgress * 100) + '%');
+                animateGlow(progress, p => reverse ? 100 - (easeOutCubic(p) * 100) : easeOutCubic(p) * 100);
+            },
+            () => {
+                if (elements.transitionGlow) elements.transitionGlow.style.opacity = 0;
+                if (reverse) {
+                    setCSSVar('--saturation', '100%');
+                    setCSSVar('--flood-progress', '0%');
+                    setCSSVar('--reverse-flood-progress', '0%');
+                }
+                resolve();
+            }
+        );
+    });
+};
 
-function createStreak(birthDate) {
+const setBackgroundInstant = (birthDate) => {
+    setCSSVar('--saturation', calculateSaturation(birthDate) + '%');
+    setCSSVar('--flood-progress', '100%');
+};
+
+// Streaks
+const createStreak = (birthDate) => {
     const streak = document.createElement('div');
     streak.className = 'streak';
     
-    const age = calculateAge(birthDate);
-    const maxAge = 75;
-    const ageRatio = Math.min(age / maxAge, 1);
+    const ageRatio = getAgeRatio(birthDate);
+    const inverseRatio = 1 - ageRatio;
     
-    // Random vertical position
-    const topPosition = Math.random() * 100;
-    streak.style.top = topPosition + '%';
+    streak.style.top = Math.random() * 100 + '%';
     
-    // INVERTED: Width is larger for younger, smaller for older
-    // Young: 600-900px, Old: 50-150px
-    const minWidth = 50 + (1 - ageRatio) * 550;  // Young: 600, Old: 50
-    const maxWidth = 150 + (1 - ageRatio) * 750; // Young: 900, Old: 150
-    const width = minWidth + Math.random() * (maxWidth - minWidth);
-    streak.style.width = width + 'px';
+    // Width: larger for younger
+    const minWidth = 50 + inverseRatio * 550;
+    const maxWidth = 150 + inverseRatio * 750;
+    streak.style.width = (minWidth + Math.random() * (maxWidth - minWidth)) + 'px';
     
-    // Brightness: younger = brighter streaks
-    const baseOpacity = 0.3 + (1 - ageRatio) * 0.5; // Young: 0.8, Old: 0.3
-    streak.style.setProperty('--streak-opacity', baseOpacity);
+    // Brightness: younger = brighter
+    streak.style.setProperty('--streak-opacity', 0.3 + inverseRatio * 0.5);
     
-    // INVERTED: Duration is longer for younger (slower), shorter for older (faster)
-    // Young: 4-6 seconds (leisurely), Old: 0.8-1.5 seconds (zipping by)
-    const minDuration = 0.8 + (1 - ageRatio) * 3.2;  // Young: 4, Old: 0.8
-    const maxDuration = 1.5 + (1 - ageRatio) * 4.5;  // Young: 6, Old: 1.5
+    // Duration: longer for younger (slower)
+    const minDuration = 0.8 + inverseRatio * 3.2;
+    const maxDuration = 1.5 + inverseRatio * 4.5;
     const duration = minDuration + Math.random() * (maxDuration - minDuration);
     streak.style.animationDuration = duration + 's';
     
-    // Slight random delay for staggering
     const delay = Math.random() * 0.3;
     streak.style.animationDelay = delay + 's';
     
-    streaksContainer.appendChild(streak);
+    elements.streaksContainer.appendChild(streak);
     
-    // Remove streak after animation completes
-    setTimeout(() => {
-        if (streak.parentNode) {
-            streak.parentNode.removeChild(streak);
-        }
-    }, (duration + delay) * 1000 + 100);
-}
+    setTimeout(() => streak.remove(), (duration + delay) * 1000 + 100);
+};
 
-function startStreaks(birthDate) {
+const startStreaks = (birthDate) => {
     stopStreaks();
     
-    const age = calculateAge(birthDate);
+    const ageRatio = getAgeRatio(birthDate);
+    const interval = 4000 - (4000 - 200) * Math.pow(ageRatio, 1.5);
     
-    // INVERTED: More streaks for older, fewer for younger
-    // Young (0): rare, ~4000ms between streaks
-    // Old (75+): very frequent, ~200ms between streaks
-    const maxAge = 75;
-    const minInterval = 200;   // milliseconds for oldest (frequent)
-    const maxInterval = 4000;  // milliseconds for youngest (rare)
-    
-    const ageRatio = Math.min(age / maxAge, 1);
-    // Use exponential curve - older = more frequent
-    const interval = maxInterval - (maxInterval - minInterval) * Math.pow(ageRatio, 1.5);
-    
-    // Create initial burst of streaks (more for older)
-    const initialBurst = Math.max(1, Math.floor(1 + ageRatio * 5));
-    for (let i = 0; i < initialBurst; i++) {
+    // Initial burst
+    const burstCount = Math.max(1, Math.floor(1 + ageRatio * 5));
+    for (let i = 0; i < burstCount; i++) {
         setTimeout(() => createStreak(birthDate), i * 200);
     }
     
-    // Continue creating streaks at calculated interval
     streakInterval = setInterval(() => {
         createStreak(birthDate);
-        
-        // Occasionally create a second streak for older ages
         if (Math.random() < ageRatio && Math.random() > 0.5) {
             setTimeout(() => createStreak(birthDate), 50 + Math.random() * 100);
         }
     }, interval);
-}
+};
 
-function stopStreaks() {
+const stopStreaks = () => {
     if (streakInterval) {
         clearInterval(streakInterval);
         streakInterval = null;
     }
-    // Clear any existing streaks
-    if (streaksContainer) {
-        streaksContainer.innerHTML = '';
+    if (elements.streaksContainer) {
+        elements.streaksContainer.innerHTML = '';
     }
-}
+};
 
-function updateStats(birthDate) {
+// Stats
+const updateStats = (birthDate) => {
     const birth = new Date(birthDate.year, birthDate.month - 1, 1);
     const today = new Date();
-    
     const age = calculateAge(birthDate);
     
     const msPerDay = 1000 * 60 * 60 * 24;
-    const msPerWeek = msPerDay * 7;
-    
     const daysLived = Math.floor((today - birth) / msPerDay);
-    const weeksLived = Math.floor((today - birth) / msPerWeek);
+    const weeksLived = Math.floor(daysLived / 7);
     
-    const totalDays = 75 * 365;
-    const totalWeeks = 75 * 52;
-    const daysRemaining = Math.max(0, totalDays - daysLived);
-    const weeksRemaining = Math.max(0, totalWeeks - weeksLived);
+    const totalDays = CONFIG.maxAge * 365;
+    const totalWeeks = CONFIG.maxAge * 52;
     
     document.getElementById('currentAge').textContent = age + ' years';
     document.getElementById('daysLived').textContent = daysLived.toLocaleString();
     document.getElementById('weeksLived').textContent = weeksLived.toLocaleString();
-    document.getElementById('weeksRemaining').textContent = weeksRemaining.toLocaleString();
-    document.getElementById('daysRemaining').textContent = daysRemaining.toLocaleString();
-}
+    document.getElementById('weeksRemaining').textContent = Math.max(0, totalWeeks - weeksLived).toLocaleString();
+    document.getElementById('daysRemaining').textContent = Math.max(0, totalDays - daysLived).toLocaleString();
+};
 
-birthForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+// View management
+const showPromptView = async (animated = false) => {
+    stopStreaks();
     
-    const birthYear = birthYearInput.value;
-    const birthMonth = birthMonthInput.value;
-    
-    if (!birthYear || !birthMonth) {
-        return;
+    if (animated) {
+        await animateBackground({}, true);
+    } else {
+        setCSSVar('--saturation', '100%');
+        setCSSVar('--flood-progress', '0%');
+        setCSSVar('--reverse-flood-progress', '0%');
     }
     
-    const birthDate = {
-        month: parseInt(birthMonth),
-        year: parseInt(birthYear)
-    };
+    elements.promptView.classList.add('active');
+    if (animated) elements.promptView.classList.add('fade-in');
+    elements.mainView.classList.remove('active');
     
-    localStorage.setItem('birthDate', JSON.stringify(birthDate));
-    showMainView(birthDate, false);
-});
+    if (animated) {
+        setTimeout(() => elements.promptView.classList.remove('fade-in'), 500);
+    }
+};
 
-resetLink.addEventListener('click', () => {
-    localStorage.removeItem('birthDate');
-    resetSelectors();
-    statsPanel.classList.remove('open');
-    statsToggle.classList.remove('open');
-    showPromptView(true);
-});
+const showMainView = async (birthDate, instant = false) => {
+    elements.promptView.classList.remove('active');
+    elements.mainView.classList.add('active');
+    updateStats(birthDate);
+    
+    if (instant) {
+        setBackgroundInstant(birthDate);
+        startStreaks(birthDate);
+    } else {
+        await animateBackground(birthDate);
+        startStreaks(birthDate);
+    }
+};
 
-statsToggle.addEventListener('click', () => {
-    statsPanel.classList.toggle('open');
-    statsToggle.classList.toggle('open');
-});
+// Event listeners
+const setupEventListeners = () => {
+    elements.monthField.addEventListener('click', () => openPicker('month'));
+    elements.yearField.addEventListener('click', () => openPicker('year'));
+    elements.scrollPickerClose.addEventListener('click', closePicker);
+    elements.scrollPickerOverlay.addEventListener('click', (e) => {
+        if (e.target === elements.scrollPickerOverlay) closePicker();
+    });
+    
+    elements.birthForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const { birthYearInput, birthMonthInput } = elements;
+        if (!birthYearInput.value || !birthMonthInput.value) return;
+        
+        const birthDate = {
+            month: parseInt(birthMonthInput.value),
+            year: parseInt(birthYearInput.value)
+        };
+        
+        localStorage.setItem('birthDate', JSON.stringify(birthDate));
+        showMainView(birthDate, false);
+    });
+    
+    elements.resetLink.addEventListener('click', () => {
+        localStorage.removeItem('birthDate');
+        resetSelectors();
+        elements.statsPanel.classList.remove('open');
+        elements.statsToggle.classList.remove('open');
+        showPromptView(true);
+    });
+    
+    elements.statsToggle.addEventListener('click', () => {
+        elements.statsPanel.classList.toggle('open');
+        elements.statsToggle.classList.toggle('open');
+    });
+};
+
+// Initialize
+const init = () => {
+    const storedData = localStorage.getItem('birthDate');
+    
+    if (storedData) {
+        showMainView(JSON.parse(storedData), true);
+    } else {
+        showPromptView();
+    }
+    
+    setupEventListeners();
+};
 
 init();

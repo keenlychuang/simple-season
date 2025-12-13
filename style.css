@@ -7,17 +7,28 @@
 :root {
     --saturation: 100%;
     --flood-progress: 0%;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    position: relative;
-    background: linear-gradient(
+    --reverse-flood-progress: 0%;
+    
+    /* Shared design tokens */
+    --glass-bg: rgba(255, 255, 255, 0.12);
+    --glass-bg-hover: rgba(255, 255, 255, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.25);
+    --glass-blur: 24px;
+    --glass-radius: 20px;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    
+    --text-primary: rgba(255, 255, 255, 0.95);
+    --text-secondary: rgba(255, 255, 255, 0.85);
+    --text-muted: rgba(255, 255, 255, 0.7);
+    --text-placeholder: rgba(255, 255, 255, 0.5);
+    
+    --input-bg: rgba(255, 255, 255, 0.15);
+    --input-border: rgba(255, 255, 255, 0.3);
+    --input-radius: 8px;
+    --input-padding: 12px;
+    
+    /* Gradient colors */
+    --gradient-full: linear-gradient(
         135deg, 
         hsl(0, 100%, 72%) 0%, 
         hsl(350, 100%, 63%) 25%, 
@@ -27,13 +38,29 @@ body {
     );
 }
 
-body::before {
+/* Base layout */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    background: var(--gradient-full);
+}
+
+/* Background transitions */
+body::before,
+body::after {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+body::before {
     background: linear-gradient(
         135deg, 
         hsl(0, var(--saturation), 72%) 0%, 
@@ -43,12 +70,14 @@ body::before {
         hsl(220, var(--saturation), 58%) 100%
     );
     clip-path: inset(0 calc(100% - var(--flood-progress)) 0 0);
-    z-index: -1;
-    pointer-events: none;
 }
 
-/* Glowing edge on transition */
-body .transition-glow {
+body::after {
+    background: var(--gradient-full);
+    clip-path: inset(0 0 0 calc(100% - var(--reverse-flood-progress)));
+}
+
+.transition-glow {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -65,54 +94,62 @@ body .transition-glow {
     filter: blur(8px);
     z-index: 0;
     pointer-events: none;
-    opacity: var(--glow-opacity, 0);
-    transition: opacity 0.3s ease;
+    opacity: 0;
 }
 
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        135deg, 
-        hsl(0, 100%, 72%) 0%, 
-        hsl(350, 100%, 63%) 25%, 
-        hsl(340, 100%, 52%) 50%, 
-        hsl(260, 100%, 55%) 75%, 
-        hsl(220, 100%, 58%) 100%
-    );
-    clip-path: inset(0 0 0 calc(100% - var(--reverse-flood-progress, 0%)));
-    z-index: -1;
-    pointer-events: none;
+/* Shared glass panel styling */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
 }
 
+/* Shared scrollbar styling */
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Container */
 .container {
     max-width: 500px;
     width: 100%;
 }
 
-.prompt-view, .main-view {
+/* Views */
+.prompt-view,
+.main-view {
     display: none;
 }
 
-.prompt-view.active, .main-view.active {
+.prompt-view.active,
+.main-view.active {
     display: block;
 }
 
 .prompt-view.active {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--glass-radius);
     padding: 40px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    opacity: 1;
-    transform: scale(1);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
 }
 
 .prompt-view.fade-in {
@@ -120,11 +157,11 @@ body::after {
 }
 
 @keyframes fadeInScale {
-    0% {
+    from {
         opacity: 0;
         transform: scale(0.95);
     }
-    100% {
+    to {
         opacity: 1;
         transform: scale(1);
     }
@@ -132,10 +169,7 @@ body::after {
 
 .main-view.active {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -154,13 +188,10 @@ body::after {
     z-index: 10;
 }
 
-/* Streaks container */
+/* Streaks */
 .streaks-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     pointer-events: none;
     overflow: hidden;
     z-index: 0;
@@ -219,14 +250,48 @@ body::after {
     }
 }
 
+/* Typography */
 h1 {
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
     margin-bottom: 20px;
     font-size: 2em;
     text-transform: lowercase;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
+.title-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.title-group h1 {
+    margin-bottom: 0;
+}
+
+/* Hourglass icon */
+.hourglass-icon {
+    width: 48px;
+    height: 48px;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+}
+
+.hourglass-icon .sand-stream {
+    animation: sandFall 2s linear infinite;
+}
+
+@keyframes sandFall {
+    from {
+        stroke-dashoffset: 0;
+    }
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+/* Form elements - shared base */
 .form-group {
     margin-bottom: 20px;
 }
@@ -234,23 +299,26 @@ h1 {
 label {
     display: block;
     margin-bottom: 8px;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-secondary);
     font-weight: 500;
     text-transform: lowercase;
 }
 
-select, input {
+select,
+input,
+.scroll-field,
+button {
     width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    padding: var(--input-padding);
+    border: 1px solid var(--input-border);
+    border-radius: var(--input-radius);
     font-size: 16px;
-    transition: border-color 0.3s, background 0.3s;
     text-transform: lowercase;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--input-bg);
     color: white;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 select option {
@@ -258,38 +326,29 @@ select option {
     color: white;
 }
 
-select:focus, input:focus {
+select:focus,
+input:focus {
     outline: none;
     border-color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-bg-hover);
 }
 
 input::placeholder {
     text-transform: lowercase;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-placeholder);
 }
 
 /* Scroll field (clickable input) */
 .scroll-field {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    font-size: 16px;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     cursor: pointer;
-    transition: all 0.2s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .scroll-field:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--text-placeholder);
+    background: var(--glass-bg-hover);
 }
 
 .scroll-field-text {
@@ -297,22 +356,19 @@ input::placeholder {
 }
 
 .scroll-field-text.placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-placeholder);
 }
 
 .scroll-field-arrow {
     font-size: 18px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-placeholder);
     transition: transform 0.2s ease;
 }
 
 /* Scroll picker overlay */
 .scroll-picker-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
@@ -330,11 +386,11 @@ input::placeholder {
 }
 
 .scroll-picker {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid var(--glass-border);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     width: 100%;
     max-width: 320px;
@@ -356,14 +412,14 @@ input::placeholder {
 }
 
 .scroll-picker-title {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     font-size: 16px;
     font-weight: 500;
     text-transform: lowercase;
 }
 
 .scroll-picker-close {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-bg-hover);
     border: none;
     color: white;
     padding: 8px 16px;
@@ -372,33 +428,18 @@ input::placeholder {
     cursor: pointer;
     text-transform: lowercase;
     transition: background 0.2s ease;
+    width: auto;
 }
 
 .scroll-picker-close:hover {
     background: rgba(255, 255, 255, 0.3);
+    transform: none;
 }
 
 .scroll-picker-container {
     max-height: 300px;
     overflow-y: auto;
     scroll-behavior: smooth;
-}
-
-.scroll-picker-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.scroll-picker-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.scroll-picker-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
-}
-
-.scroll-picker-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
 }
 
 .scroll-picker-list {
@@ -408,7 +449,7 @@ input::placeholder {
 
 .scroll-picker-option {
     padding: 14px 20px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
     font-size: 16px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -423,29 +464,21 @@ input::placeholder {
 
 .scroll-picker-option:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 
 .scroll-picker-option.selected {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-bg-hover);
     color: white;
     font-weight: 500;
 }
 
+/* Button */
 button {
-    width: 100%;
     padding: 14px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    font-size: 16px;
+    background: var(--glass-bg-hover);
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-    text-transform: lowercase;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 button:hover {
@@ -457,6 +490,7 @@ button:active {
     transform: translateY(0);
 }
 
+/* Stats toggle */
 .stats-toggle {
     display: inline-flex;
     align-items: center;
@@ -476,6 +510,7 @@ button:active {
 
 .stats-toggle:hover {
     background: rgba(255, 255, 255, 0.25);
+    transform: none;
 }
 
 .toggle-icon {
@@ -491,16 +526,17 @@ button:active {
     transform: rotate(45deg);
 }
 
+/* Stats panel */
 .stats {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out, opacity 0.4s ease-out;
     margin-bottom: 0;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-shadow);
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0 40px;
     width: 100%;
@@ -513,23 +549,6 @@ button:active {
     padding: 40px;
     opacity: 1;
     overflow-y: auto;
-}
-
-.stats::-webkit-scrollbar {
-    width: 8px;
-}
-
-.stats::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.stats::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-}
-
-.stats::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
 }
 
 .stat-row {
@@ -556,14 +575,14 @@ button:active {
 }
 
 .stat-label {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
     font-size: 0.9em;
     margin-bottom: 5px;
     text-transform: lowercase;
 }
 
 .stat-value {
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
     font-size: 1.8em;
     font-weight: 600;
     text-transform: lowercase;
@@ -580,7 +599,7 @@ button:active {
 }
 
 .reset-link a {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 0.9em;
     cursor: pointer;
@@ -590,5 +609,5 @@ button:active {
 
 .reset-link a:hover {
     text-decoration: underline;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
