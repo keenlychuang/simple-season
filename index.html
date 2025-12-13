@@ -7,37 +7,46 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="transition-glow" id="transitionGlow"></div>
     <div class="container">
         <div class="prompt-view" id="promptView">
             <h1>simple season</h1>
             
             <form id="birthForm">
                 <div class="form-group">
-                    <label for="birthMonth">birth month</label>
-                    <select id="birthMonth" required>
-                        <option value="">select month...</option>
-                        <option value="1">january</option>
-                        <option value="2">february</option>
-                        <option value="3">march</option>
-                        <option value="4">april</option>
-                        <option value="5">may</option>
-                        <option value="6">june</option>
-                        <option value="7">july</option>
-                        <option value="8">august</option>
-                        <option value="9">september</option>
-                        <option value="10">october</option>
-                        <option value="11">november</option>
-                        <option value="12">december</option>
-                    </select>
+                    <label>birth month</label>
+                    <div class="scroll-field" id="monthField" data-placeholder="select month...">
+                        <span class="scroll-field-text">select month...</span>
+                        <span class="scroll-field-arrow">›</span>
+                    </div>
+                    <input type="hidden" id="birthMonth" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="birthYear">birth year</label>
-                    <input type="number" id="birthYear" min="1900" max="2025" placeholder="1990" required>
+                    <label>birth year</label>
+                    <div class="scroll-field" id="yearField" data-placeholder="select year...">
+                        <span class="scroll-field-text">select year...</span>
+                        <span class="scroll-field-arrow">›</span>
+                    </div>
+                    <input type="hidden" id="birthYear" required>
                 </div>
 
                 <button type="submit">continue</button>
             </form>
+        </div>
+
+        <!-- Scroll picker overlay -->
+        <div class="scroll-picker-overlay" id="scrollPickerOverlay">
+            <div class="scroll-picker">
+                <div class="scroll-picker-header">
+                    <span class="scroll-picker-title" id="scrollPickerTitle">select</span>
+                    <button type="button" class="scroll-picker-close" id="scrollPickerClose">done</button>
+                </div>
+                <div class="scroll-picker-container" id="scrollPickerContainer">
+                    <div class="scroll-picker-list" id="scrollPickerList"></div>
+                </div>
+            </div>
+        </div>
         </div>
 
         <div class="main-view" id="mainView">
@@ -52,24 +61,26 @@
                         <div class="stat-value" id="currentAge">-</div>
                     </div>
 
-                    <div class="stat-item">
-                        <div class="stat-label">days lived</div>
-                        <div class="stat-value" id="daysLived">-</div>
+                    <div class="stat-row">
+                        <div class="stat-item stat-half">
+                            <div class="stat-label">days lived</div>
+                            <div class="stat-value" id="daysLived">-</div>
+                        </div>
+                        <div class="stat-item stat-half">
+                            <div class="stat-label">days remaining</div>
+                            <div class="stat-value" id="daysRemaining">-</div>
+                        </div>
                     </div>
 
-                    <div class="stat-item">
-                        <div class="stat-label">weeks lived</div>
-                        <div class="stat-value" id="weeksLived">-</div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">weeks remaining</div>
-                        <div class="stat-value" id="weeksRemaining">-</div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">days remaining</div>
-                        <div class="stat-value" id="daysRemaining">-</div>
+                    <div class="stat-row">
+                        <div class="stat-item stat-half">
+                            <div class="stat-label">weeks lived</div>
+                            <div class="stat-value" id="weeksLived">-</div>
+                        </div>
+                        <div class="stat-item stat-half">
+                            <div class="stat-label">weeks remaining</div>
+                            <div class="stat-value" id="weeksRemaining">-</div>
+                        </div>
                     </div>
                     
                     <div class="reset-link">

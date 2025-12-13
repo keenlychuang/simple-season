@@ -5,8 +5,33 @@ const resetLink = document.getElementById('resetLink');
 const statsToggle = document.getElementById('statsToggle');
 const statsPanel = document.getElementById('statsPanel');
 const streaksContainer = document.getElementById('streaksContainer');
+const birthYearInput = document.getElementById('birthYear');
+const birthMonthInput = document.getElementById('birthMonth');
+const monthField = document.getElementById('monthField');
+const yearField = document.getElementById('yearField');
+const scrollPickerOverlay = document.getElementById('scrollPickerOverlay');
+const scrollPickerList = document.getElementById('scrollPickerList');
+const scrollPickerContainer = document.getElementById('scrollPickerContainer');
+const scrollPickerTitle = document.getElementById('scrollPickerTitle');
+const scrollPickerClose = document.getElementById('scrollPickerClose');
 
 let streakInterval = null;
+let currentPickerType = null;
+
+const months = [
+    { value: 1, label: 'january' },
+    { value: 2, label: 'february' },
+    { value: 3, label: 'march' },
+    { value: 4, label: 'april' },
+    { value: 5, label: 'may' },
+    { value: 6, label: 'june' },
+    { value: 7, label: 'july' },
+    { value: 8, label: 'august' },
+    { value: 9, label: 'september' },
+    { value: 10, label: 'october' },
+    { value: 11, label: 'november' },
+    { value: 12, label: 'december' }
+];
 
 function init() {
     const storedData = localStorage.getItem('birthDate');
@@ -17,6 +42,113 @@ function init() {
     } else {
         showPromptView();
     }
+    
+    setupPickers();
+}
+
+function setupPickers() {
+    monthField.addEventListener('click', () => openPicker('month'));
+    yearField.addEventListener('click', () => openPicker('year'));
+    
+    scrollPickerClose.addEventListener('click', closePicker);
+    scrollPickerOverlay.addEventListener('click', (e) => {
+        if (e.target === scrollPickerOverlay) {
+            closePicker();
+        }
+    });
+}
+
+function openPicker(type) {
+    currentPickerType = type;
+    scrollPickerList.innerHTML = '';
+    
+    if (type === 'month') {
+        scrollPickerTitle.textContent = 'select month';
+        
+        months.forEach(month => {
+            const option = document.createElement('div');
+            option.className = 'scroll-picker-option';
+            option.textContent = month.label;
+            option.dataset.value = month.value;
+            
+            if (birthMonthInput.value === String(month.value)) {
+                option.classList.add('selected');
+            }
+            
+            option.addEventListener('click', () => selectOption(option, month.value, month.label));
+            scrollPickerList.appendChild(option);
+        });
+    } else {
+        scrollPickerTitle.textContent = 'select year';
+        
+        const currentYear = new Date().getFullYear();
+        const startYear = currentYear - 100;
+        
+        for (let year = currentYear; year >= startYear; year--) {
+            const option = document.createElement('div');
+            option.className = 'scroll-picker-option';
+            option.textContent = year;
+            option.dataset.value = year;
+            
+            if (birthYearInput.value === String(year)) {
+                option.classList.add('selected');
+            }
+            
+            option.addEventListener('click', () => selectOption(option, year, year));
+            scrollPickerList.appendChild(option);
+        }
+    }
+    
+    scrollPickerOverlay.classList.add('active');
+    
+    // Scroll to selected item if exists
+    setTimeout(() => {
+        const selected = scrollPickerList.querySelector('.selected');
+        if (selected) {
+            selected.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+    }, 50);
+}
+
+function selectOption(element, value, label) {
+    // Remove selected from all options
+    scrollPickerList.querySelectorAll('.scroll-picker-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // Add selected to clicked option
+    element.classList.add('selected');
+    
+    // Update the appropriate field
+    if (currentPickerType === 'month') {
+        birthMonthInput.value = value;
+        const fieldText = monthField.querySelector('.scroll-field-text');
+        fieldText.textContent = label;
+        fieldText.classList.remove('placeholder');
+    } else {
+        birthYearInput.value = value;
+        const fieldText = yearField.querySelector('.scroll-field-text');
+        fieldText.textContent = label;
+        fieldText.classList.remove('placeholder');
+    }
+}
+
+function closePicker() {
+    scrollPickerOverlay.classList.remove('active');
+    currentPickerType = null;
+}
+
+function resetSelectors() {
+    birthMonthInput.value = '';
+    birthYearInput.value = '';
+    
+    const monthText = monthField.querySelector('.scroll-field-text');
+    monthText.textContent = 'select month...';
+    monthText.classList.add('placeholder');
+    
+    const yearText = yearField.querySelector('.scroll-field-text');
+    yearText.textContent = 'select year...';
+    yearText.classList.add('placeholder');
 }
 
 function showPromptView(animate = false) {
@@ -26,7 +158,13 @@ function showPromptView(animate = false) {
         // Reverse animation
         animateBackgroundReverse(() => {
             promptView.classList.add('active');
+            promptView.classList.add('fade-in');
             mainView.classList.remove('active');
+            
+            // Remove fade-in class after animation completes
+            setTimeout(() => {
+                promptView.classList.remove('fade-in');
+            }, 500);
         });
     } else {
         promptView.classList.add('active');
@@ -40,6 +178,8 @@ function showPromptView(animate = false) {
 function animateBackgroundReverse(callback) {
     const duration = 2000;
     const startTime = performance.now();
+    
+    const transitionGlow = document.getElementById('transitionGlow');
     
     // Reset reverse flood progress
     document.documentElement.style.setProperty('--reverse-flood-progress', '0%');
@@ -56,6 +196,21 @@ function animateBackgroundReverse(callback) {
         // Sweep the saturated color from right to left
         document.documentElement.style.setProperty('--reverse-flood-progress', (easedProgress * 100) + '%');
         
+        // Update glow position (moving right to left)
+        if (transitionGlow) {
+            const glowPosition = 100 - (easedProgress * 100);
+            transitionGlow.style.left = `calc(${glowPosition}% - 15px)`;
+            
+            // Fade in at start, fade out at end
+            let glowOpacity = 1;
+            if (progress < 0.1) {
+                glowOpacity = progress / 0.1;
+            } else if (progress > 0.9) {
+                glowOpacity = (1 - progress) / 0.1;
+            }
+            transitionGlow.style.opacity = glowOpacity;
+        }
+        
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
@@ -63,6 +218,9 @@ function animateBackgroundReverse(callback) {
             document.documentElement.style.setProperty('--saturation', '100%');
             document.documentElement.style.setProperty('--flood-progress', '0%');
             document.documentElement.style.setProperty('--reverse-flood-progress', '0%');
+            if (transitionGlow) {
+                transitionGlow.style.opacity = 0;
+            }
             if (callback) callback();
         }
     }
@@ -115,6 +273,8 @@ function animateBackground(birthDate) {
     const saturation = calculateSaturation(birthDate);
     document.documentElement.style.setProperty('--saturation', saturation + '%');
     
+    const transitionGlow = document.getElementById('transitionGlow');
+    
     const duration = 2000;
     const startTime = performance.now();
     
@@ -129,28 +289,61 @@ function animateBackground(birthDate) {
         
         document.documentElement.style.setProperty('--flood-progress', (easedProgress * 100) + '%');
         
+        // Update glow position and opacity
+        if (transitionGlow) {
+            const glowPosition = easedProgress * 100;
+            transitionGlow.style.left = `calc(${glowPosition}% - 15px)`;
+            
+            // Fade in at start, fade out at end
+            let glowOpacity = 1;
+            if (progress < 0.1) {
+                glowOpacity = progress / 0.1;
+            } else if (progress > 0.9) {
+                glowOpacity = (1 - progress) / 0.1;
+            }
+            transitionGlow.style.opacity = glowOpacity;
+        }
+        
         if (progress < 1) {
             requestAnimationFrame(animate);
+        } else {
+            if (transitionGlow) {
+                transitionGlow.style.opacity = 0;
+            }
         }
     }
     
     requestAnimationFrame(animate);
 }
 
-function createStreak() {
+function createStreak(birthDate) {
     const streak = document.createElement('div');
     streak.className = 'streak';
+    
+    const age = calculateAge(birthDate);
+    const maxAge = 75;
+    const ageRatio = Math.min(age / maxAge, 1);
     
     // Random vertical position
     const topPosition = Math.random() * 100;
     streak.style.top = topPosition + '%';
     
-    // Random width (100-300px)
-    const width = 100 + Math.random() * 200;
+    // INVERTED: Width is larger for younger, smaller for older
+    // Young: 600-900px, Old: 50-150px
+    const minWidth = 50 + (1 - ageRatio) * 550;  // Young: 600, Old: 50
+    const maxWidth = 150 + (1 - ageRatio) * 750; // Young: 900, Old: 150
+    const width = minWidth + Math.random() * (maxWidth - minWidth);
     streak.style.width = width + 'px';
     
-    // Random speed (1.5-3 seconds)
-    const duration = 1.5 + Math.random() * 1.5;
+    // Brightness: younger = brighter streaks
+    const baseOpacity = 0.3 + (1 - ageRatio) * 0.5; // Young: 0.8, Old: 0.3
+    streak.style.setProperty('--streak-opacity', baseOpacity);
+    
+    // INVERTED: Duration is longer for younger (slower), shorter for older (faster)
+    // Young: 4-6 seconds (leisurely), Old: 0.8-1.5 seconds (zipping by)
+    const minDuration = 0.8 + (1 - ageRatio) * 3.2;  // Young: 4, Old: 0.8
+    const maxDuration = 1.5 + (1 - ageRatio) * 4.5;  // Young: 6, Old: 1.5
+    const duration = minDuration + Math.random() * (maxDuration - minDuration);
     streak.style.animationDuration = duration + 's';
     
     // Slight random delay for staggering
@@ -172,30 +365,30 @@ function startStreaks(birthDate) {
     
     const age = calculateAge(birthDate);
     
-    // Calculate interval based on age
-    // Young (0): very frequent, ~300ms between streaks
-    // Old (75+): very rare, ~8000ms between streaks
+    // INVERTED: More streaks for older, fewer for younger
+    // Young (0): rare, ~4000ms between streaks
+    // Old (75+): very frequent, ~200ms between streaks
     const maxAge = 75;
-    const minInterval = 300;   // milliseconds for youngest
-    const maxInterval = 8000;  // milliseconds for oldest
+    const minInterval = 200;   // milliseconds for oldest (frequent)
+    const maxInterval = 4000;  // milliseconds for youngest (rare)
     
     const ageRatio = Math.min(age / maxAge, 1);
-    // Use exponential curve for more dramatic effect
-    const interval = minInterval + (maxInterval - minInterval) * Math.pow(ageRatio, 1.5);
+    // Use exponential curve - older = more frequent
+    const interval = maxInterval - (maxInterval - minInterval) * Math.pow(ageRatio, 1.5);
     
-    // Create initial burst of streaks (more for younger)
-    const initialBurst = Math.max(1, Math.floor(5 * (1 - ageRatio)));
+    // Create initial burst of streaks (more for older)
+    const initialBurst = Math.max(1, Math.floor(1 + ageRatio * 5));
     for (let i = 0; i < initialBurst; i++) {
-        setTimeout(() => createStreak(), i * 200);
+        setTimeout(() => createStreak(birthDate), i * 200);
     }
     
     // Continue creating streaks at calculated interval
     streakInterval = setInterval(() => {
-        createStreak();
+        createStreak(birthDate);
         
-        // Occasionally create a second streak for younger ages
-        if (Math.random() > ageRatio && Math.random() > 0.5) {
-            setTimeout(() => createStreak(), 100 + Math.random() * 200);
+        // Occasionally create a second streak for older ages
+        if (Math.random() < ageRatio && Math.random() > 0.5) {
+            setTimeout(() => createStreak(birthDate), 50 + Math.random() * 100);
         }
     }, interval);
 }
@@ -238,9 +431,16 @@ function updateStats(birthDate) {
 birthForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
+    const birthYear = birthYearInput.value;
+    const birthMonth = birthMonthInput.value;
+    
+    if (!birthYear || !birthMonth) {
+        return;
+    }
+    
     const birthDate = {
-        month: parseInt(document.getElementById('birthMonth').value),
-        year: parseInt(document.getElementById('birthYear').value)
+        month: parseInt(birthMonth),
+        year: parseInt(birthYear)
     };
     
     localStorage.setItem('birthDate', JSON.stringify(birthDate));
@@ -249,7 +449,7 @@ birthForm.addEventListener('submit', (e) => {
 
 resetLink.addEventListener('click', () => {
     localStorage.removeItem('birthDate');
-    document.getElementById('birthForm').reset();
+    resetSelectors();
     statsPanel.classList.remove('open');
     statsToggle.classList.remove('open');
     showPromptView(true);
